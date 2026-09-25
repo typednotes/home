@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terms of Service · Typednotes</title>
+<meta name="description" content="Typednotes terms of service.">
+<meta name="theme-color" content="#d4eaf9">
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; background: #d4eaf9; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  /* Light CRT feel: faint blue scanlines + vignette */
+  .crt {
+    position: fixed; inset: 0; pointer-events: none; z-index: 3;
+    background:
+      radial-gradient(ellipse at center, rgba(20,70,150,0) 60%, rgba(20,70,150,.16) 100%),
+      repeating-linear-gradient(to bottom, rgba(20,70,150,0) 0 2px, rgba(20,70,150,.045) 2px 3px);
+  }
+  :root { --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  /* Terminal-style links */
+  nav {
+    position: fixed; z-index: 2; display: flex; gap: 1ch;
+    font: clamp(12px, 1.1vw, 15px)/1 var(--mono);
+  }
+  nav.top { top: 0; right: 0; padding: 1.25rem 1.5rem; }
+  nav.bottom { bottom: 0; left: 50%; transform: translateX(-50%); padding: 1rem 1rem 1.1rem; font-size: clamp(11px, 1vw, 13px); }
+  nav a {
+    display: inline-block; padding: .55em .9em; white-space: nowrap;
+    color: #1d4f8f; text-decoration: none; letter-spacing: .02em;
+    border: 1px solid #8dbbe3; background: rgba(255,255,255,.78);
+    transition: color .15s, border-color .15s, background-color .15s;
+  }
+  nav a::before { content: "[ "; color: #7aa6d0; }
+  nav a::after  { content: " ]"; color: #7aa6d0; }
+  nav a:hover, nav a:focus-visible { color: #062f73; border-color: #2c6cc0; background: #fff; outline: none; }
+  nav a.primary, nav a[aria-current="page"] { color: #fff; background: #0a3a8c; border-color: #0a3a8c; }
+  nav a.primary::before, nav a.primary::after,
+  nav a[aria-current="page"]::before, nav a[aria-current="page"]::after { color: #8fb4e8; }
+  nav a.primary:hover, nav a.primary:focus-visible { background: #0d4bb3; border-color: #0d4bb3; color: #fff; }
+
+  /* White overlay window, scrollable */
+  main {
+    position: fixed; z-index: 1;
+    top: 4.5rem; bottom: 4.25rem; left: 50%; transform: translateX(-50%);
+    width: min(780px, calc(100vw - 1.5rem)); box-sizing: border-box;
+    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    background: rgba(255,255,255,.94);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    border: 1px solid #9cc5ea;
+    box-shadow: 0 10px 40px rgba(10,58,140,.18), 0 0 0 4px rgba(255,255,255,.35);
+    color: #17263a; font: 14px/1.65 var(--mono);
+    scrollbar-width: thin; scrollbar-color: #9cc5ea transparent;
+  }
+  main:focus { outline: none; }
+  .bar {
+    position: sticky; top: 0; z-index: 1;
+    display: flex; justify-content: space-between; gap: 1rem;
+    padding: .6rem 1.5rem; font-size: 12.5px;
+    color: #0a3a8c; background: #eef6fd; border-bottom: 1px solid #c3def4;
+  }
+  .bar .prompt { color: #5a8cc4; }
+  .bar .dots { color: #9cc5ea; letter-spacing: .2em; white-space: nowrap; }
+  article { padding: 1.75rem 2rem 2.5rem; }
+  h1 { margin: 0 0 .25rem; font-size: 22px; line-height: 1.3; color: #0a3a8c; }
+  h1::before { content: "# "; color: #8fb4e8; }
+  h2 { margin: 2.1rem 0 .6rem; font-size: 15px; color: #0a3a8c; }
+  h2::before { content: "## "; color: #8fb4e8; }
+  p { margin: .6rem 0; }
+  .meta { color: #5d7390; margin-bottom: 1.5rem; }
+  ul { margin: .5rem 0; padding-left: 2.2ch; list-style: none; }
+  li { margin: .3rem 0; position: relative; }
+  li::before { content: "-"; position: absolute; left: -2ch; color: #5a8cc4; }
+  a { color: #0b57c2; text-underline-offset: 2px; }
+  a:hover { color: #062f73; }
+  strong { color: #0f2b52; }
+  .caps { font-size: 13px; }
+  @media (max-width: 600px) {
+    nav.top { padding: .85rem .75rem; }
+    main { top: 3.6rem; bottom: 3.6rem; font-size: 13px; }
+    article { padding: 1.25rem 1.1rem 2rem; }
+    .bar { padding: .55rem 1.1rem; }
+    .bar .dots { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="screen" aria-hidden="true"></canvas>
+<nav class="top" aria-label="Links">
+  <a href="https://github.com/typednotes/typednotes" rel="noopener">github</a>
+  <a class="primary" href="https://app.typednotes.com/login">sign in</a>
+</nav>
+
+<main id="content" tabindex="0" aria-labelledby="title">
+  <div class="bar" aria-hidden="true"><span><span class="prompt">typednotes:~$</span> cat terms.md</span><span class="dots">· · ·</span></div>
+  <article>
+    <h1 id="title">Terms of Service</h1>
+    <p class="meta">Last updated: September 26, 2026</p>
+
+    <p>These Terms of Service (“<strong>Terms</strong>”) govern your access to and use of the website
+      <a href="https://www.typednotes.com">www.typednotes.com</a> and the Typednotes application at
+      <a href="https://app.typednotes.com">app.typednotes.com</a> (together, the “<strong>Service</strong>”), operated by
+      Typednotes (“<strong>Typednotes</strong>”, “<strong>we</strong>”, “<strong>us</strong>”). By using the Service you
+      agree to these Terms. If you use the Service on behalf of an organization, you agree to them on its behalf and
+      confirm that you are authorized to do so.</p>
+
+    <h2>1. The Service</h2>
+    <p>Typednotes is a server-side agent that acts on resources on behalf of its users, with bounded, auditable
+      authority. You can create organizations and projects, connect third-party services (code hosts, storage, AI
+      providers and messaging platforms) and let the agent act on them at your direction. The Service is evolving:
+      features may be added, changed or removed.</p>
+
+    <h2>2. Accounts</h2>
+    <ul>
+      <li>You sign in with a GitHub or Google account. You must provide accurate information and keep your identity
+        provider account secure.</li>
+      <li>You are responsible for all activity under your account and in the organizations you administer.</li>
+      <li>You must be at least 16 years old and able to enter into a binding contract.</li>
+      <li>Tell us promptly at <a href="mailto:contact@typednotes.com">contact@typednotes.com</a> if you suspect
+        unauthorized use of your account.</li>
+    </ul>
+
+    <h2>3. Connected services and the authority you grant</h2>
+    <ul>
+      <li>When you connect a third-party service, you authorize Typednotes to use the credentials you provide to access
+        that service and perform the actions you, or members of your organization, request — within the permissions you
+        granted.</li>
+      <li>Your use of third-party services remains subject to their own terms and policies, which you are responsible
+        for complying with. We are not responsible for third-party services, their availability or their content.</li>
+      <li>You can disconnect a service or revoke its access at any time.</li>
+    </ul>
+
+    <h2>4. Your content</h2>
+    <p>You keep all rights to the content you submit to or make available through the Service, including repository
+      contents, files and messages (“<strong>Your Content</strong>”). You grant Typednotes a worldwide, non-exclusive,
+      royalty-free license to host, copy, process and transmit Your Content solely to operate and provide the Service to
+      you. You confirm that you have the rights needed to grant this license and to let the Service act on Your Content.</p>
+    <p>How we handle personal data is described in our <a href="privacy.html">Privacy Policy</a>.</p>
+
+    <h2>5. AI output and automated actions</h2>
+    <ul>
+      <li>The Service uses AI models, through the AI provider accounts you connect, to produce output and take actions.
+        AI output can be incomplete, inaccurate or inappropriate: review it before relying on it.</li>
+      <li>You decide which services the agent can access and what it may do. You are responsible for the actions
+        performed in your projects under the configuration and instructions you or your organization provide.</li>
+      <li>Actions are recorded so they can be audited.</li>
+    </ul>
+
+    <h2>6. Acceptable use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>use the Service for anything unlawful, harmful, fraudulent, or that infringes the rights of others;</li>
+      <li>send spam or unsolicited messages through connected messaging platforms;</li>
+      <li>access or act on accounts, systems or data you are not authorized to use;</li>
+      <li>upload malware, or probe, scan or attack the Service or any other system;</li>
+      <li>circumvent usage limits, credits, security measures or access controls;</li>
+      <li>overload or disrupt the Service or its infrastructure;</li>
+      <li>use the Service in violation of the terms of any connected third-party service.</li>
+    </ul>
+
+    <h2>7. Credits and fees</h2>
+    <ul>
+      <li>Using the Service consumes credits. New organizations may receive free welcome credits.</li>
+      <li>Credits have no cash value, are not transferable and cannot be exchanged for money, unless the law requires
+        otherwise.</li>
+      <li>Any paid plan or credit purchase will be presented, with its price, before you buy it.</li>
+      <li>Charges from third-party providers you connect (for example your AI provider) are billed by them, under your
+        account with them.</li>
+    </ul>
+
+    <h2>8. Open source</h2>
+    <p>Typednotes’ source code is published on <a href="https://github.com/typednotes" rel="noopener">GitHub</a>. Your
+      use of that code is governed by its license; these Terms govern the hosted Service.</p>
+
+    <h2>9. Availability and changes</h2>
+    <p>We work to keep the Service available and secure, but we do not guarantee that it will be uninterrupted or
+      error-free. We may modify, suspend or discontinue all or part of the Service, with reasonable notice when
+      practical.</p>
+
+    <h2>10. Termination</h2>
+    <p>You may stop using the Service and delete your account at any time. We may suspend or terminate your access if
+      you breach these Terms, if required by law, or to protect the Service or its users. Upon termination, your right
+      to use the Service ends and your data is handled as described in the Privacy Policy. Sections that by their nature
+      should survive termination (including 4, 11, 12 and 13) survive.</p>
+
+    <h2>11. Disclaimers</h2>
+    <p class="caps">To the maximum extent permitted by law, the Service is provided “as is” and “as available”, without
+      warranties of any kind, express or implied, including warranties of merchantability, fitness for a particular
+      purpose, and non-infringement.</p>
+
+    <h2>12. Limitation of liability</h2>
+    <p class="caps">To the maximum extent permitted by law, Typednotes will not be liable for any indirect, incidental,
+      special, consequential or punitive damages, or for any loss of profits, revenue, data or goodwill. Typednotes’
+      total liability for any claim relating to the Service is limited to the amount you paid us for the Service in the
+      twelve months before the claim. Nothing in these Terms limits liability that cannot be limited under applicable
+      law.</p>
+
+    <h2>13. Indemnity</h2>
+    <p>You agree to indemnify Typednotes against claims, damages and costs (including reasonable legal fees) arising
+      from Your Content, your use of the Service, or your breach of these Terms or of third-party terms.</p>
+
+    <h2>14. Changes to these Terms</h2>
+    <p>We may update these Terms. We will change the “Last updated” date above and, for material changes, notify you
+      through the Service or by email before they take effect. Continuing to use the Service after the changes take
+      effect means you accept them.</p>
+
+    <h2>15. General</h2>
+    <p>These Terms, together with the Privacy Policy, are the entire agreement between you and Typednotes about the
+      Service. If a provision is found unenforceable, the rest remains in effect. Failing to enforce a provision is not a
+      waiver. You may not transfer these Terms without our consent; we may transfer them in connection with a merger,
+      acquisition or sale of assets.</p>
+
+    <h2>16. Contact</h2>
+    <p>Questions about these Terms: <a href="mailto:contact@typednotes.com">contact@typednotes.com</a>.</p>
+  </article>
+</main>
+
+<nav class="bottom" aria-label="Pages">
+  <a href="./">home</a>
+  <a href="privacy.html">privacy</a>
+  <a href="terms.html" aria-current="page">terms</a>
+</nav>
+<div class="crt" aria-hidden="true"></div>
+<script>
+(() => {
+  'use strict';
+
+  // Forward flight through a graph of Lean 4 / Calculus of Constructions terms:
+  // the camera moves forward, vertices passing behind it reappear in the distance.
+
+  const FONT_FAMILY = 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace';
+  const CH = [' ', '.', '-', '|', '/', '\\'];
+  const C_DOT = 1, C_H = 2, C_V = 3, C_SL = 4, C_BS = 5;
+  const glyphIndex = new Map(CH.map((g, i) => [g, i]));
+  const idx = g => {
+    if (!glyphIndex.has(g)) { glyphIndex.set(g, CH.length); CH.push(g); }
+    return glyphIndex.get(g);
+  };
+  const TERMS = [
+    ['λ', 'fun x => x'], ['λ', 'fun x ↦ f x'], ['Π', '(x : α) → β x'], ['∀', '∀ x, p x'],
+    ['∃', '∃ x, p x'], ['Σ', 'Σ x, β x'], ['→', 'α → β'], ['↦', 'x ↦ f x'],
+    ['⊢', 'Γ ⊢ t : T'], ['*', 'Prop'], ['□', 'Type'], ['□', 'Sort u'],
+    ['ℕ', 'Nat'], ['ℤ', 'Int'], ['=', 'a = b'], ['≡', 'rfl'], ['∘', 'g ∘ f'],
+    ['α', 'α : Type'], ['β', 'β : Sort v'], ['×', 'α × β'], ['⟨', '⟨a, b⟩'],
+    ['∧', 'p ∧ q'], ['∨', 'p ∨ q'], ['¬', '¬p'], ['↔', 'p ↔ q'],
+    ['#', '#check'], ['⋯', 'by simp'], ['▸', 'h ▸ rfl'],
+  ].map(([s, l]) => [[idx(s)], Array.from(l).map(idx)]);
+
+  // Blue ink on a light blue screen: brightness blends from background to ink.
+  const LEVELS = 32;
+  const BG = [212, 234, 249], INK = [6, 52, 138];
+  const BG_CSS = `rgb(${BG})`;
+  const SHADES = Array.from({ length: LEVELS }, (_, i) => {
+    const m = 0.1 + 0.9 * Math.pow((i + 1) / LEVELS, 0.85);
+    return `rgb(${BG.map((b, j) => Math.round(b + (INK[j] - b) * m))})`;
+  });
+
+  const F = 1.6;              // focal length (screen half-height = z / F)
+  const NEAR = 0.3, FAR = 7;  // depth range of the flight volume
+  const FADE = 1.6;           // distance over which new vertices fade in
+  const VELOCITY = 0.7;       // world units per second
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.getElementById('screen');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  let W, H, dpr, fs, cw, chH, cols, rows, ox, oy, k;
+  let cellChar, cellBright, cellPrio, buckets = [];
+  let N, px, py, pz, sc, sr, sd, eb, lb, tk, flash, X, Y, R, R2;
+  let t = 0, last = 0;
+  let yawP = 0, pitchP = 0, yawT = 0, pitchT = 0;
+
+  function spawn(i, z) {
+    px[i] = rand(-X, X); py[i] = rand(-Y, Y); pz[i] = z;
+    tk[i] = (Math.random() * TERMS.length) | 0;
+  }
+
+  function setup() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fs = clamp(Math.round(W / 110 / 0.6), 9, 16);
+    ctx.font = `${fs}px ${FONT_FAMILY}`;
+    cw = Math.round(ctx.measureText('M').width * dpr) / dpr;
+    chH = Math.ceil(fs * 1.25);
+    cols = Math.floor(W / cw); rows = Math.floor(H / chH);
+    ox = (W - cols * cw) / 2; oy = (H - rows * chH) / 2;
+    const n = cols * rows;
+    cellChar = new Uint16Array(n); cellBright = new Float32Array(n); cellPrio = new Float32Array(n);
+    buckets = Array.from({ length: LEVELS }, () => []);
+
+    // Flight volume: a box whose cross-section fills the view at the far plane.
+    const aspect = (cols * cw) / (rows * chH);
+    k = (rows * chH) / 2;
+    Y = (FAR / F) * 1.05;
+    X = Y * aspect;
+
+    N = clamp(Math.round(n / 22), 90, 300);
+    px = new Float32Array(N); py = new Float32Array(N); pz = new Float32Array(N);
+    sc = new Float32Array(N); sr = new Float32Array(N); sd = new Float32Array(N);
+    eb = new Float32Array(N); lb = new Float32Array(N);
+    tk = new Uint8Array(N); flash = new Float32Array(N);
+    for (let i = 0; i < N; i++) spawn(i, rand(NEAR, FAR));
+    // Connection radius tuned for ~3.2 neighbours on average.
+    const density = N / (4 * X * Y * (FAR - NEAR));
+    R = Math.cbrt(3.2 / (density * 4.18879));
+    R2 = R * R;
+  }
+
+  function plot(c, r, g, b, prio) {
+    if (c < 0 || r < 0 || c >= cols || r >= rows) return;
+    const i = r * cols + c;
+    if (prio > cellPrio[i]) { cellPrio[i] = prio; cellChar[i] = g; cellBright[i] = b; }
+  }
+
+  function drawEdge(i, j, strength) {
+    const c0 = sc[i], r0 = sr[i], dc = sc[j] - c0, dr = sr[j] - r0;
+    // Clip the segment to the grid (Liang–Barsky): near vertices project far off-screen.
+    let u0 = 0, u1 = 1;
+    const clip = (p, q) => {
+      if (p === 0) return q >= 0;
+      const u = q / p;
+      if (p < 0) { if (u > u1) return false; if (u > u0) u0 = u; }
+      else { if (u < u0) return false; if (u < u1) u1 = u; }
+      return true;
+    };
+    if (!(clip(-dc, c0 + 1) && clip(dc, cols - c0) && clip(-dr, r0 + 1) && clip(dr, rows - r0))) return;
+    const n = Math.ceil(Math.max(Math.abs(dc), Math.abs(dr)) * (u1 - u0));
+    if (n < 1 || Math.max(Math.abs(dc), Math.abs(dr)) < 2) return;
+    const ax = Math.abs(dc * cw), ay = Math.abs(dr * chH);
+    let g;
+    if (ay < ax * 0.414) g = C_H;
+    else if (ay > ax * 2.414) g = C_V;
+    else g = (dc * dr > 0) ? C_BS : C_SL;
+    const b0 = eb[i], b1 = eb[j];
+    for (let s = 0; s <= n; s++) {
+      const u = u0 + (u1 - u0) * (s / n);
+      if (u <= 0.001 || u >= 0.999) continue;
+      const b = strength * (b0 + (b1 - b0) * u);
+      plot(Math.round(c0 + dc * u), Math.round(r0 + dr * u), b < 0.14 ? C_DOT : g, b, b);
+    }
+  }
+
+  function frame(now) {
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+    last = now; t += dt;
+    const speed = reduceMotion ? 0.15 : 1;
+
+    // Fly forward: vertices behind the camera are reborn at the far plane.
+    const step = VELOCITY * speed * dt;
+    for (let i = 0; i < N; i++) {
+      pz[i] -= step;
+      if (pz[i] < NEAR) spawn(i, pz[i] + (FAR - NEAR));
+    }
+
+    // Camera: gentle sway + pointer parallax.
+    yawP += (yawT - yawP) * Math.min(1, dt * 2);
+    pitchP += (pitchT - pitchP) * Math.min(1, dt * 2);
+    const yaw = Math.sin(t * 0.07 * speed) * 0.07 + yawP;
+    const pitch = Math.sin(t * 0.05 * speed) * 0.04 + pitchP;
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+
+    for (let i = 0; i < N; i++) {
+      const x1 = px[i] * cy + pz[i] * sy;
+      const z1 = -px[i] * sy + pz[i] * cy;
+      const y2 = py[i] * cp - z1 * sp;
+      const z2 = py[i] * sp + z1 * cp;
+      if (z2 < NEAR * 0.8) { sd[i] = -1; continue; }
+      sc[i] = cols / 2 + (F * x1 / z2 * k) / cw;
+      sr[i] = rows / 2 - (F * y2 / z2 * k) / chH;
+      const d = clamp(1 - (z2 - NEAR) / (FAR - NEAR), 0, 1); // 1 = near, 0 = far
+      const fade = clamp((FAR - pz[i]) / FADE, 0, 1);         // new vertices fade in
+      sd[i] = d;
+      eb[i] = fade * (0.12 + 0.88 * d);
+      lb[i] = fade * (0.3 + 0.7 * d);
+    }
+
+    cellChar.fill(0); cellBright.fill(0); cellPrio.fill(0);
+    for (let i = 0; i < N; i++) {
+      if (sd[i] < 0) continue;
+      for (let j = i + 1; j < N; j++) {
+        if (sd[j] < 0) continue;
+        const dx = px[i] - px[j], dy = py[i] - py[j], dz = pz[i] - pz[j];
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < R2) drawEdge(i, j, Math.pow(1 - Math.sqrt(d2) / R, 0.8));
+      }
+    }
+
+    // Occasionally a term "reduces" into another one, with a brief flash.
+    if (Math.random() < dt * (reduceMotion ? 0.2 : 2)) {
+      const i = (Math.random() * N) | 0;
+      tk[i] = (Math.random() * TERMS.length) | 0;
+      flash[i] = 1;
+    }
+    for (let i = 0; i < N; i++) {
+      flash[i] = Math.max(0, flash[i] - dt * 2.5);
+      if (sd[i] < 0) continue;
+      const d = sd[i];
+      const glyphs = TERMS[tk[i]][d > 0.78 ? 1 : 0];
+      const b = Math.min(1, lb[i] + 0.5 * flash[i] * lb[i]);
+      const c0 = Math.round(sc[i]) - (glyphs.length >> 1), r = Math.round(sr[i]);
+      for (let m = 0; m < glyphs.length; m++) plot(c0 + m, r, glyphs[m], b, 10 + d);
+    }
+
+    ctx.fillStyle = BG_CSS;
+    ctx.fillRect(0, 0, W, H);
+    ctx.font = `${fs}px ${FONT_FAMILY}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    for (let l = 0; l < LEVELS; l++) buckets[l].length = 0;
+    for (let i = 0, n = cellChar.length; i < n; i++) {
+      if (cellChar[i] === 0 || cellBright[i] < 0.03) continue;
+      buckets[Math.min(LEVELS - 1, Math.floor(cellBright[i] * LEVELS))].push(i);
+    }
+    for (let l = 0; l < LEVELS; l++) {
+      const b = buckets[l];
+      if (!b.length) continue;
+      ctx.fillStyle = SHADES[l];
+      for (let m = 0; m < b.length; m++) {
+        const i = b[m], c = i % cols, r = (i / cols) | 0;
+        ctx.fillText(CH[cellChar[i]], ox + c * cw, oy + r * chH + chH / 2);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('pointermove', e => {
+    yawT = (e.clientX / W - 0.5) * 0.3;
+    pitchT = (e.clientY / H - 0.5) * 0.2;
+  }, { passive: true });
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(setup, 120);
+  });
+
+  // Let arrow keys / space scroll the terms right away.
+  document.getElementById('content').focus({ preventScroll: true });
+
+  setup();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

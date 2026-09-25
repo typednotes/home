@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy · Typednotes</title>
+<meta name="description" content="Typednotes privacy policy: what data we collect, how we use it, and your choices.">
+<meta name="theme-color" content="#d4eaf9">
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; background: #d4eaf9; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  /* Light CRT feel: faint blue scanlines + vignette */
+  .crt {
+    position: fixed; inset: 0; pointer-events: none; z-index: 3;
+    background:
+      radial-gradient(ellipse at center, rgba(20,70,150,0) 60%, rgba(20,70,150,.16) 100%),
+      repeating-linear-gradient(to bottom, rgba(20,70,150,0) 0 2px, rgba(20,70,150,.045) 2px 3px);
+  }
+  :root { --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  /* Terminal-style links */
+  nav {
+    position: fixed; z-index: 2; display: flex; gap: 1ch;
+    font: clamp(12px, 1.1vw, 15px)/1 var(--mono);
+  }
+  nav.top { top: 0; right: 0; padding: 1.25rem 1.5rem; }
+  nav.bottom { bottom: 0; left: 50%; transform: translateX(-50%); padding: 1rem 1rem 1.1rem; font-size: clamp(11px, 1vw, 13px); }
+  nav a {
+    display: inline-block; padding: .55em .9em; white-space: nowrap;
+    color: #1d4f8f; text-decoration: none; letter-spacing: .02em;
+    border: 1px solid #8dbbe3; background: rgba(255,255,255,.78);
+    transition: color .15s, border-color .15s, background-color .15s;
+  }
+  nav a::before { content: "[ "; color: #7aa6d0; }
+  nav a::after  { content: " ]"; color: #7aa6d0; }
+  nav a:hover, nav a:focus-visible { color: #062f73; border-color: #2c6cc0; background: #fff; outline: none; }
+  nav a.primary, nav a[aria-current="page"] { color: #fff; background: #0a3a8c; border-color: #0a3a8c; }
+  nav a.primary::before, nav a.primary::after,
+  nav a[aria-current="page"]::before, nav a[aria-current="page"]::after { color: #8fb4e8; }
+  nav a.primary:hover, nav a.primary:focus-visible { background: #0d4bb3; border-color: #0d4bb3; color: #fff; }
+
+  /* White overlay window, scrollable */
+  main {
+    position: fixed; z-index: 1;
+    top: 4.5rem; bottom: 4.25rem; left: 50%; transform: translateX(-50%);
+    width: min(780px, calc(100vw - 1.5rem)); box-sizing: border-box;
+    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    background: rgba(255,255,255,.94);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    border: 1px solid #9cc5ea;
+    box-shadow: 0 10px 40px rgba(10,58,140,.18), 0 0 0 4px rgba(255,255,255,.35);
+    color: #17263a; font: 14px/1.65 var(--mono);
+    scrollbar-width: thin; scrollbar-color: #9cc5ea transparent;
+  }
+  main:focus { outline: none; }
+  .bar {
+    position: sticky; top: 0; z-index: 1;
+    display: flex; justify-content: space-between; gap: 1rem;
+    padding: .6rem 1.5rem; font-size: 12.5px;
+    color: #0a3a8c; background: #eef6fd; border-bottom: 1px solid #c3def4;
+  }
+  .bar .prompt { color: #5a8cc4; }
+  .bar .dots { color: #9cc5ea; letter-spacing: .2em; white-space: nowrap; }
+  article { padding: 1.75rem 2rem 2.5rem; }
+  h1 { margin: 0 0 .25rem; font-size: 22px; line-height: 1.3; color: #0a3a8c; }
+  h1::before { content: "# "; color: #8fb4e8; }
+  h2 { margin: 2.1rem 0 .6rem; font-size: 15px; color: #0a3a8c; }
+  h2::before { content: "## "; color: #8fb4e8; }
+  h3 { margin: 1.4rem 0 .4rem; font-size: 14px; color: #1d4f8f; }
+  h3::before { content: "### "; color: #a9c7ec; }
+  p { margin: .6rem 0; }
+  .meta { color: #5d7390; margin-bottom: 1.5rem; }
+  ul { margin: .5rem 0; padding-left: 2.2ch; list-style: none; }
+  li { margin: .3rem 0; position: relative; }
+  li::before { content: "-"; position: absolute; left: -2ch; color: #5a8cc4; }
+  a { color: #0b57c2; text-underline-offset: 2px; }
+  a:hover { color: #062f73; }
+  strong { color: #0f2b52; }
+  .note { margin: 1rem 0; padding: .75rem 1rem; background: #eef6fd; border-left: 3px solid #2c6cc0; }
+  @media (max-width: 600px) {
+    nav.top { padding: .85rem .75rem; }
+    main { top: 3.6rem; bottom: 3.6rem; font-size: 13px; }
+    article { padding: 1.25rem 1.1rem 2rem; }
+    .bar { padding: .55rem 1.1rem; }
+    .bar .dots { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="screen" aria-hidden="true"></canvas>
+<nav class="top" aria-label="Links">
+  <a href="https://github.com/typednotes/typednotes" rel="noopener">github</a>
+  <a class="primary" href="https://app.typednotes.com/login">sign in</a>
+</nav>
+
+<main id="content" tabindex="0" aria-labelledby="title">
+  <div class="bar" aria-hidden="true"><span><span class="prompt">typednotes:~$</span> cat privacy.md</span><span class="dots">· · ·</span></div>
+  <article>
+    <h1 id="title">Privacy Policy</h1>
+    <p class="meta">Last updated: September 26, 2026</p>
+
+    <p>Typednotes (“<strong>Typednotes</strong>”, “<strong>we</strong>”, “<strong>us</strong>”) operates the website
+      <a href="https://www.typednotes.com">www.typednotes.com</a> and the Typednotes application at
+      <a href="https://app.typednotes.com">app.typednotes.com</a> (together, the “<strong>Service</strong>”).
+      Typednotes is a server-side agent that acts on resources on behalf of its users, with bounded, auditable authority.</p>
+    <p>This policy explains what information we collect, how we use and share it, how long we keep it, and the choices
+      you have. It also describes how we handle data received from Google APIs.</p>
+
+    <h2>1. Information we collect</h2>
+    <h3>Account information</h3>
+    <p>You sign in with GitHub or Google. From the identity provider we receive your provider account identifier,
+      your name, your verified email address and your profile picture URL. We never receive your password.</p>
+    <h3>Organizations and projects</h3>
+    <p>The organizations, memberships, roles, projects, primary repositories, messaging interfaces and settings you
+      create or join in the Service.</p>
+    <h3>Connection credentials</h3>
+    <p>When you connect a third-party service to an organization — for example GitHub, GitLab, an S3-compatible bucket,
+      Azure Blob Storage, Dropbox, Google Drive, an AI provider (Anthropic, Mistral, OpenAI or an OpenAI-compatible
+      endpoint) or a messaging platform (Slack, WhatsApp, Signal) — we store the OAuth tokens, API keys or other
+      credentials required to act on your behalf. Credentials are stored encrypted in a dedicated secrets vault and are
+      never displayed back.</p>
+    <h3>Content from connected services</h3>
+    <p>When you, or an agent running in one of your projects, perform an action, the Service accesses the content needed
+      to perform it: repository contents, files in connected storage, and messages received by your project’s messaging
+      interfaces (which land in the project’s inbox).</p>
+    <h3>Usage and billing</h3>
+    <p>Usage events, credit balances and holds used to meter the Service.</p>
+    <h3>Technical data</h3>
+    <p>Server logs containing IP addresses, user agents, timestamps and request paths, used for security, abuse
+      prevention and debugging.</p>
+    <h3>Cookies</h3>
+    <p>The application uses a strictly necessary session cookie, plus short-lived cookies that protect the sign-in flow.
+      We use no advertising or analytics cookies. This website (www.typednotes.com) sets no cookies and loads no
+      third-party resources.</p>
+
+    <h2>2. How we use information</h2>
+    <ul>
+      <li>To provide and operate the Service: create your account, sign you in, and run your organizations and projects.</li>
+      <li>To perform the actions you, or members of your organization, request through the Service.</li>
+      <li>To meter usage and manage credits.</li>
+      <li>To secure the Service, prevent fraud and abuse, and debug problems.</li>
+      <li>To send you service-related messages (for example security or policy notices).</li>
+      <li>To comply with legal obligations.</li>
+    </ul>
+    <p>We do <strong>not</strong> sell personal data, we do not use it for advertising, and we do not build marketing
+      profiles.</p>
+
+    <h2>3. Google user data</h2>
+    <p>The Service uses Google APIs in two cases:</p>
+    <ul>
+      <li><strong>Sign in with Google</strong> (scopes <code>openid</code>, <code>email</code>, <code>profile</code>):
+        we receive your Google account identifier, name, verified email address and profile picture URL, used only to
+        create your account and sign you in.</li>
+      <li><strong>Google Drive connection</strong> (only if you connect Google Drive to an organization): we access the
+        Drive files needed to perform the actions you or your project members request, such as reading or writing
+        documents for a project.</li>
+    </ul>
+    <p>How we handle Google user data:</p>
+    <ul>
+      <li>We use it only to provide and improve the user-facing features of the Service that you request.</li>
+      <li>We do not transfer it to third parties, except as necessary to provide the features you request (for example,
+        sending a file’s content to the AI provider account you connected to your project, at your direction), to comply
+        with applicable law, or as part of a merger, acquisition or sale of assets with notice to you.</li>
+      <li>We do not use it for advertising, including personalized, retargeted or interest-based advertising, and we do
+        not sell it.</li>
+      <li>We do not use it to determine credit-worthiness or for lending purposes.</li>
+      <li>No human at Typednotes reads it unless you give explicit consent for specific data, it is necessary for
+        security purposes (such as investigating abuse), it is required to comply with applicable law, or it is
+        aggregated and anonymized for internal operations.</li>
+      <li>We do not use it to develop, improve or train generalized or non-personalized artificial intelligence or
+        machine learning models.</li>
+    </ul>
+    <p class="note">Typednotes’ use and transfer to any other app of information received from Google APIs will adhere to
+      the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services
+      User Data Policy</a>, including the Limited Use requirements.</p>
+    <p>You can disconnect Google Drive from your organization in the Service at any time, and revoke Typednotes’ access
+      to your Google account at <a href="https://myaccount.google.com/permissions" rel="noopener">myaccount.google.com/permissions</a>.</p>
+
+    <h2>4. How we share information</h2>
+    <ul>
+      <li><strong>Members of your organizations</strong> can see organization data, projects and inboxes according to
+        their roles.</li>
+      <li><strong>Third-party services you connect.</strong> When the Service acts on your behalf, it sends the data
+        needed for that action to the service concerned (for example, a prompt and relevant file content to the AI
+        provider account you connected, or a reply to a Slack channel). Those services process the data under their own
+        terms and privacy policies, under your account with them.</li>
+      <li><strong>Infrastructure providers</strong> who host and operate the Service for us, under contractual
+        confidentiality and security obligations, and only to provide the Service.</li>
+      <li><strong>Legal reasons</strong>, when required by law or to protect the rights, safety and security of our
+        users, the public or Typednotes.</li>
+      <li><strong>Business transfers</strong>, in connection with a merger, acquisition or sale of assets, with notice
+        to you.</li>
+      <li><strong>With your consent</strong>, in any other case.</li>
+    </ul>
+
+    <h2>5. Retention and deletion</h2>
+    <ul>
+      <li>Account, organization and project data are kept while your account is active.</li>
+      <li>Connection credentials are deleted from the vault when you disconnect the service.</li>
+      <li>Server logs are kept for a limited period for security and debugging, then deleted.</li>
+      <li>When you delete your account, or ask us to, we delete or anonymize your personal data within 30 days, except
+        where we must keep some of it to meet legal obligations.</li>
+    </ul>
+
+    <h2>6. Security</h2>
+    <p>Data is encrypted in transit (TLS). Connection credentials are encrypted in a dedicated secrets vault. Calls to
+      third-party providers go through a single broker service that enforces scoped, auditable authority, and our
+      services run with least-privilege access. No method of transmission or storage is completely secure, but we work
+      to protect your data and will notify you of breaches as required by law.</p>
+
+    <h2>7. Your rights</h2>
+    <p>Depending on where you live (for example under the GDPR, the UK GDPR or US state privacy laws), you may have the
+      right to access, correct, delete or export your personal data, to object to or restrict its processing, and to
+      withdraw consent at any time. To exercise these rights, contact us at the address below; we respond within
+      30 days. You may also lodge a complaint with your local data protection authority.</p>
+    <p>We process personal data to perform our contract with you (providing the Service), for our legitimate interests
+      (security, abuse prevention and improving the Service), to comply with legal obligations, and, where required,
+      with your consent.</p>
+
+    <h2>8. International transfers</h2>
+    <p>Your data may be processed in countries other than your own. Where required, we rely on appropriate safeguards
+      such as the European Commission’s Standard Contractual Clauses.</p>
+
+    <h2>9. Children</h2>
+    <p>The Service is not directed to children under 16, and we do not knowingly collect personal data from them. If you
+      believe a child has provided us personal data, contact us and we will delete it.</p>
+
+    <h2>10. Changes to this policy</h2>
+    <p>We may update this policy. We will change the “Last updated” date above and, for material changes, notify you
+      through the Service or by email before they take effect.</p>
+
+    <h2>11. Contact</h2>
+    <p>Questions or requests about this policy or your data:
+      <a href="mailto:privacy@typednotes.com">privacy@typednotes.com</a>.</p>
+    <p>See also our <a href="terms.html">Terms of Service</a>.</p>
+  </article>
+</main>
+
+<nav class="bottom" aria-label="Pages">
+  <a href="./">home</a>
+  <a href="privacy.html" aria-current="page">privacy</a>
+  <a href="terms.html">terms</a>
+</nav>
+<div class="crt" aria-hidden="true"></div>
+<script>
+(() => {
+  'use strict';
+
+  // Rotating graph: static nodes (Lean 4 / Calculus of Constructions terms)
+  // in a cylinder around the vertical axis, spun slowly by the camera.
+
+  const FONT_FAMILY = 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace';
+  const CH = [' ', '.', '-', '|', '/', '\\'];
+  const C_DOT = 1, C_H = 2, C_V = 3, C_SL = 4, C_BS = 5;
+  const glyphIndex = new Map(CH.map((g, i) => [g, i]));
+  const idx = g => {
+    if (!glyphIndex.has(g)) { glyphIndex.set(g, CH.length); CH.push(g); }
+    return glyphIndex.get(g);
+  };
+  const TERMS = [
+    ['λ', 'fun x => x'], ['λ', 'fun x ↦ f x'], ['Π', '(x : α) → β x'], ['∀', '∀ x, p x'],
+    ['∃', '∃ x, p x'], ['Σ', 'Σ x, β x'], ['→', 'α → β'], ['↦', 'x ↦ f x'],
+    ['⊢', 'Γ ⊢ t : T'], ['*', 'Prop'], ['□', 'Type'], ['□', 'Sort u'],
+    ['ℕ', 'Nat'], ['ℤ', 'Int'], ['=', 'a = b'], ['≡', 'rfl'], ['∘', 'g ∘ f'],
+    ['α', 'α : Type'], ['β', 'β : Sort v'], ['×', 'α × β'], ['⟨', '⟨a, b⟩'],
+    ['∧', 'p ∧ q'], ['∨', 'p ∨ q'], ['¬', '¬p'], ['↔', 'p ↔ q'],
+    ['#', '#check'], ['⋯', 'by simp'], ['▸', 'h ▸ rfl'],
+  ].map(([s, l]) => [[idx(s)], Array.from(l).map(idx)]);
+
+  // Blue ink on a light blue screen: brightness blends from background to ink.
+  const LEVELS = 32;
+  const BG = [212, 234, 249], INK = [6, 52, 138];
+  const BG_CSS = `rgb(${BG})`;
+  const SHADES = Array.from({ length: LEVELS }, (_, i) => {
+    const m = 0.1 + 0.9 * Math.pow((i + 1) / LEVELS, 0.85);
+    return `rgb(${BG.map((b, j) => Math.round(b + (INK[j] - b) * m))})`;
+  });
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.getElementById('screen');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  let W, H, dpr, fs, cw, chH, cols, rows, ox, oy, k;
+  let cellChar, cellBright, cellPrio, buckets = [];
+  let N, px, py, pz, sc, sr, sd, eb, tk, flash;
+  let EA, EB, ES, RC, HY, D, zSpan;
+  let t = 0, last = 0;
+  let yawP = 0, pitchP = 0, yawT = 0, pitchT = 0;
+
+  function setup() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fs = clamp(Math.round(W / 110 / 0.6), 9, 16);
+    ctx.font = `${fs}px ${FONT_FAMILY}`;
+    cw = Math.round(ctx.measureText('M').width * dpr) / dpr;
+    chH = Math.ceil(fs * 1.25);
+    cols = Math.floor(W / cw); rows = Math.floor(H / chH);
+    ox = (W - cols * cw) / 2; oy = (H - rows * chH) / 2;
+    const n = cols * rows;
+    cellChar = new Uint16Array(n); cellBright = new Float32Array(n); cellPrio = new Float32Array(n);
+    buckets = Array.from({ length: LEVELS }, () => []);
+
+    // World: screen height spans [-1, 1] at depth 0.
+    const aspect = (cols * cw) / (rows * chH);
+    k = (rows * chH) / 2;
+    RC = Math.max(0.9, aspect * 1.05); // cylinder radius
+    HY = 1.15;                         // cylinder half-height
+    D = Math.max(3.2, RC * 1.9);       // camera distance to the axis
+    zSpan = Math.hypot(RC, HY);
+
+    N = clamp(Math.round(n / 45), 50, 200);
+    px = new Float32Array(N); py = new Float32Array(N); pz = new Float32Array(N);
+    sc = new Float32Array(N); sr = new Float32Array(N); sd = new Float32Array(N); eb = new Float32Array(N);
+    tk = new Uint8Array(N); flash = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const r = RC * Math.sqrt(Math.random()), a = rand(0, Math.PI * 2);
+      px[i] = r * Math.cos(a); pz[i] = r * Math.sin(a); py[i] = rand(-HY, HY);
+      tk[i] = (Math.random() * TERMS.length) | 0;
+    }
+    // The graph is static: edges are computed once (~3.4 neighbours per node).
+    const density = N / (Math.PI * RC * RC * 2 * HY);
+    const R = Math.cbrt(3.4 / (density * 4.18879)), R2 = R * R;
+    const a = [], b = [], s = [];
+    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+      const dx = px[i] - px[j], dy = py[i] - py[j], dz = pz[i] - pz[j];
+      const d2 = dx * dx + dy * dy + dz * dz;
+      if (d2 < R2) { a.push(i); b.push(j); s.push(Math.pow(1 - Math.sqrt(d2) / R, 0.8)); }
+    }
+    EA = Uint16Array.from(a); EB = Uint16Array.from(b); ES = Float32Array.from(s);
+  }
+
+  function plot(c, r, g, b, prio) {
+    if (c < 0 || r < 0 || c >= cols || r >= rows) return;
+    const i = r * cols + c;
+    if (prio > cellPrio[i]) { cellPrio[i] = prio; cellChar[i] = g; cellBright[i] = b; }
+  }
+
+  function drawEdge(i, j, strength) {
+    const c0 = sc[i], r0 = sr[i], dc = sc[j] - c0, dr = sr[j] - r0;
+    // Clip the segment to the grid (Liang–Barsky).
+    let u0 = 0, u1 = 1;
+    const clip = (p, q) => {
+      if (p === 0) return q >= 0;
+      const u = q / p;
+      if (p < 0) { if (u > u1) return false; if (u > u0) u0 = u; }
+      else { if (u < u0) return false; if (u < u1) u1 = u; }
+      return true;
+    };
+    if (!(clip(-dc, c0 + 1) && clip(dc, cols - c0) && clip(-dr, r0 + 1) && clip(dr, rows - r0))) return;
+    const n = Math.ceil(Math.max(Math.abs(dc), Math.abs(dr)) * (u1 - u0));
+    if (n < 1 || Math.max(Math.abs(dc), Math.abs(dr)) < 2) return;
+    const ax = Math.abs(dc * cw), ay = Math.abs(dr * chH);
+    let g;
+    if (ay < ax * 0.414) g = C_H;
+    else if (ay > ax * 2.414) g = C_V;
+    else g = (dc * dr > 0) ? C_BS : C_SL;
+    const b0 = eb[i], b1 = eb[j];
+    for (let s = 0; s <= n; s++) {
+      const u = u0 + (u1 - u0) * (s / n);
+      if (u <= 0.001 || u >= 0.999) continue;
+      const b = strength * (b0 + (b1 - b0) * u);
+      plot(Math.round(c0 + dc * u), Math.round(r0 + dr * u), b < 0.14 ? C_DOT : g, b, b);
+    }
+  }
+
+  function frame(now) {
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+    last = now; t += dt;
+    const speed = reduceMotion ? 0.15 : 1;
+
+    // Camera: continuous rotation around the vertical axis + pointer parallax.
+    yawP += (yawT - yawP) * Math.min(1, dt * 2);
+    pitchP += (pitchT - pitchP) * Math.min(1, dt * 2);
+    const yaw = t * 0.12 * speed + yawP;
+    const pitch = 0.22 + Math.sin(t * 0.05 * speed) * 0.06 + pitchP;
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+
+    for (let i = 0; i < N; i++) {
+      const x1 = px[i] * cy + pz[i] * sy;
+      const z1 = -px[i] * sy + pz[i] * cy;
+      const y2 = py[i] * cp - z1 * sp;
+      const z2 = py[i] * sp + z1 * cp;
+      const p = D / (z2 + D);
+      sc[i] = cols / 2 + (x1 * p * k) / cw;
+      sr[i] = rows / 2 - (y2 * p * k) / chH;
+      sd[i] = clamp((zSpan - z2) / (2 * zSpan), 0, 1); // 1 = near, 0 = far
+      eb[i] = 0.3 + 0.7 * sd[i];
+    }
+
+    cellChar.fill(0); cellBright.fill(0); cellPrio.fill(0);
+    for (let e = 0; e < EA.length; e++) drawEdge(EA[e], EB[e], ES[e]);
+
+    // Occasionally a term "reduces" into another one, with a brief flash.
+    if (Math.random() < dt * (reduceMotion ? 0.2 : 2)) {
+      const i = (Math.random() * N) | 0;
+      tk[i] = (Math.random() * TERMS.length) | 0;
+      flash[i] = 1;
+    }
+    for (let i = 0; i < N; i++) {
+      flash[i] = Math.max(0, flash[i] - dt * 2.5);
+      const d = sd[i];
+      const glyphs = TERMS[tk[i]][d > 0.7 ? 1 : 0];
+      const b = Math.min(1, 0.35 + 0.65 * d + 0.5 * flash[i]);
+      const c0 = Math.round(sc[i]) - (glyphs.length >> 1), r = Math.round(sr[i]);
+      for (let m = 0; m < glyphs.length; m++) plot(c0 + m, r, glyphs[m], b, 10 + d);
+    }
+
+    ctx.fillStyle = BG_CSS;
+    ctx.fillRect(0, 0, W, H);
+    ctx.font = `${fs}px ${FONT_FAMILY}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    for (let l = 0; l < LEVELS; l++) buckets[l].length = 0;
+    for (let i = 0, n = cellChar.length; i < n; i++) {
+      if (cellChar[i] === 0 || cellBright[i] < 0.03) continue;
+      buckets[Math.min(LEVELS - 1, Math.floor(cellBright[i] * LEVELS))].push(i);
+    }
+    for (let l = 0; l < LEVELS; l++) {
+      const b = buckets[l];
+      if (!b.length) continue;
+      ctx.fillStyle = SHADES[l];
+      for (let m = 0; m < b.length; m++) {
+        const i = b[m], c = i % cols, r = (i / cols) | 0;
+        ctx.fillText(CH[cellChar[i]], ox + c * cw, oy + r * chH + chH / 2);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('pointermove', e => {
+    yawT = (e.clientX / W - 0.5) * 0.5;
+    pitchT = (e.clientY / H - 0.5) * 0.3;
+  }, { passive: true });
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(setup, 120);
+  });
+
+  // Let arrow keys / space scroll the policy right away.
+  document.getElementById('content').focus({ preventScroll: true });
+
+  setup();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

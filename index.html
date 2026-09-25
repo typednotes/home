@@ -19,12 +19,14 @@
   }
   /* Terminal-style links, top right. Rendered under the CRT overlay. */
   nav {
-    position: fixed; top: 0; right: 0; z-index: 1;
-    display: flex; gap: 1ch; padding: 1.25rem 1.5rem;
+    position: fixed; z-index: 1; display: flex; gap: 1ch;
     font: clamp(12px, 1.1vw, 15px)/1 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   }
+  nav.top { top: 0; right: 0; padding: 1.25rem 1.5rem; }
+  nav.bottom { bottom: 0; left: 50%; transform: translateX(-50%); padding: 1rem 1rem 1.1rem; font-size: clamp(11px, 1vw, 13px); }
+  nav a[aria-current="page"] { color: #f2f2f2; border-color: #9a9a9a; }
   nav a {
-    display: inline-block; padding: .55em .9em;
+    display: inline-block; padding: .55em .9em; white-space: nowrap;
     color: #b8b8b8; text-decoration: none; letter-spacing: .02em;
     border: 1px solid #3a3a3a; background: rgba(0,0,0,.72);
     transition: color .15s, border-color .15s, background-color .15s;
@@ -48,9 +50,14 @@
 <body>
 <h1 class="sr-only">Typednotes</h1>
 <canvas id="screen" aria-hidden="true"></canvas>
-<nav aria-label="Links">
+<nav class="top" aria-label="Links">
   <a href="https://github.com/typednotes/typednotes" rel="noopener">github</a>
   <a class="primary" href="https://app.typednotes.com/login">sign in</a>
+</nav>
+<nav class="bottom" aria-label="Pages">
+  <a href="./" aria-current="page">home</a>
+  <a href="privacy.html">privacy</a>
+  <a href="terms.html">terms</a>
 </nav>
 <div class="crt" aria-hidden="true"></div>
 <noscript><pre>

@@ -1,7 +1,9 @@
 # home
 
 Typednotes homepage: a single self-contained `index.html` (no build step) rendering an
-animated ASCII-art 3D node network with a "Typednotes" title overlay.
+animated ASCII-art 3D node network with a "Typednotes" title overlay, plus two self-contained
+legal pages: `privacy.html` (https://www.typednotes.com/privacy, the privacy policy URL for the
+Google OAuth consent screen) and `terms.html` (https://www.typednotes.com/terms).
 
 It is published to GitHub Pages by the workflow in `.github/workflows/pages.yml` on every
 push to `main` (or manually via *Actions → Deploy to GitHub Pages → Run workflow*).
