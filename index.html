@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Typednotes</title>
+<meta name="description" content="Typednotes">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  /* Subtle CRT feel: scanlines + vignette */
+  .crt {
+    position: fixed; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%),
+      repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px);
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  noscript pre {
+    position: fixed; inset: 0; margin: 0; display: grid; place-items: center;
+    color: #e6e6e6; font: 14px/1.2 ui-monospace, Menlo, Consolas, monospace;
+  }
+</style>
+</head>
+<body>
+<h1 class="sr-only">Typednotes</h1>
+<canvas id="screen" aria-hidden="true"></canvas>
+<div class="crt" aria-hidden="true"></div>
+<noscript><pre>
+ _____                     _             _
+|_   _|   _ _ __   ___  __| |_ __   ___ | |_ ___  ___
+  | || | | | '_ \ / _ \/ _` | '_ \ / _ \| __/ _ \/ __|
+  | || |_| | |_) |  __/ (_| | | | | (_) | ||  __/\__ \
+  |_| \__, | .__/ \___|\__,_|_| |_|\___/ \__\___||___/
+      |___/|_|
+</pre></noscript>
+<script>
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Title fonts (figlet: ANSI Shadow, Standard, Small), largest first.
+  // ---------------------------------------------------------------------------
+  const TITLE_FONTS = [
+    ["████████╗██╗   ██╗██████╗ ███████╗██████╗ ███╗   ██╗ ██████╗ ████████╗███████╗███████╗", "╚══██╔══╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝██╔════╝", "   ██║    ╚████╔╝ ██████╔╝█████╗  ██║  ██║██╔██╗ ██║██║   ██║   ██║   █████╗  ███████╗", "   ██║     ╚██╔╝  ██╔═══╝ ██╔══╝  ██║  ██║██║╚██╗██║██║   ██║   ██║   ██╔══╝  ╚════██║", "   ██║      ██║   ██║     ███████╗██████╔╝██║ ╚████║╚██████╔╝   ██║   ███████╗███████║", "   ╚═╝      ╚═╝   ╚═╝     ╚══════╝╚═════╝ ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝╚══════╝"],
+    [" _____                     _             _", "|_   _|   _ _ __   ___  __| |_ __   ___ | |_ ___  ___", "  | || | | | '_ \\ / _ \\/ _` | '_ \\ / _ \\| __/ _ \\/ __|", "  | || |_| | |_) |  __/ (_| | | | | (_) | ||  __/\\__ \\", "  |_| \\__, | .__/ \\___|\\__,_|_| |_|\\___/ \\__\\___||___/", "      |___/|_|"],
+    [" _____                  _          _", "|_   _|  _ _ __  ___ __| |_ _  ___| |_ ___ ___", "  | || || | '_ \\/ -_) _` | ' \\/ _ \\  _/ -_|_-<", "  |_| \\_, | .__/\\___\\__,_|_||_\\___/\\__\\___/__/", "      |__/|_|"],
+  ];
+
+  const FONT_FAMILY = 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace';
+  const GLITCH = '!<>-_\\/[]{}=+*^?#%$&@;:~';
+  const BOX_CHARS = '═║╔╗╚╝';
+
+  // Scene glyphs (index 0 = empty cell, 6 = blank cell owned by a label).
+  const CH = [' ', '.', '-', '|', '/', '\\', ' '];
+  const C_DOT = 1, C_H = 2, C_V = 3, C_SL = 4, C_BS = 5;
+  const glyphIndex = new Map(CH.map((g, i) => [g, i]));
+  glyphIndex.set(' ', 6);
+  const idx = g => {
+    if (!glyphIndex.has(g)) { glyphIndex.set(g, CH.length); CH.push(g); }
+    return glyphIndex.get(g);
+  };
+
+  // Nodes are terms of the Calculus of Constructions / Lean 4:
+  // a single symbol when far, the full term when close to the camera.
+  const TERMS = [
+    ['λ', 'fun x => x'], ['λ', 'fun x ↦ f x'], ['Π', '(x : α) → β x'], ['∀', '∀ x, p x'],
+    ['∃', '∃ x, p x'], ['Σ', 'Σ x, β x'], ['→', 'α → β'], ['↦', 'x ↦ f x'],
+    ['⊢', 'Γ ⊢ t : T'], ['*', 'Prop'], ['□', 'Type'], ['□', 'Sort u'],
+    ['ℕ', 'Nat'], ['ℤ', 'Int'], ['=', 'a = b'], ['≡', 'rfl'], ['∘', 'g ∘ f'],
+    ['α', 'α : Type'], ['β', 'β : Sort v'], ['×', 'α × β'], ['⟨', '⟨a, b⟩'],
+    ['∧', 'p ∧ q'], ['∨', 'p ∨ q'], ['¬', '¬p'], ['↔', 'p ↔ q'],
+    ['#', '#check'], ['⋯', 'by simp'], ['▸', 'h ▸ rfl'],
+  ].map(([s, l]) => [[idx(s)], Array.from(l).map(idx)]);
+
+  const LEVELS = 32;
+  const GRAYS = Array.from({ length: LEVELS }, (_, i) => {
+    const t = (i + 1) / LEVELS;
+    const v = Math.round(22 + 210 * Math.pow(t, 0.9));
+    return `rgb(${v},${v},${v})`;
+  });
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.getElementById('screen');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+  let W, H, dpr, fs, cw, chH, cols, rows, ox, oy;
+  let cellChar, cellBright, cellPrio;
+  let buckets = [];
+  let N, px, py, pz, vx, vy, vz, sc, sr, sd, tk, flash, R, R2;
+  let boxX, boxY, boxZ, k;
+  const CAM = 3.2;
+  let title, tw, th, tc0, tr0, titleCells;
+  let t = 0, last = 0;
+  let yawP = 0, pitchP = 0, yawT = 0, pitchT = 0;
+
+  function setup() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Character grid: aim for ~110 columns, clamp font size to readable range.
+    fs = clamp(Math.round(W / 110 / 0.6), 9, 16);
+    ctx.font = `${fs}px ${FONT_FAMILY}`;
+    cw = Math.round(ctx.measureText('M').width * dpr) / dpr;
+    chH = Math.ceil(fs * 1.25);
+    cols = Math.floor(W / cw);
+    rows = Math.floor(H / chH);
+    ox = (W - cols * cw) / 2;
+    oy = (H - rows * chH) / 2;
+
+    const n = cols * rows;
+    cellChar = new Uint16Array(n);
+    cellBright = new Float32Array(n);
+    cellPrio = new Float32Array(n);
+    buckets = Array.from({ length: LEVELS }, () => []);
+
+    // World: height spans [-1, 1], width follows the physical screen aspect.
+    const aspect = (cols * cw) / (rows * chH);
+    boxX = aspect * 1.2;
+    boxY = 1.2;
+    boxZ = 1.3;
+    k = (rows * chH) / 2; // pixels per world unit at depth 0
+
+    N = clamp(Math.round(n / 55), 40, 170);
+    px = new Float32Array(N); py = new Float32Array(N); pz = new Float32Array(N);
+    vx = new Float32Array(N); vy = new Float32Array(N); vz = new Float32Array(N);
+    sc = new Float32Array(N); sr = new Float32Array(N); sd = new Float32Array(N);
+    tk = new Uint8Array(N); flash = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      tk[i] = (Math.random() * TERMS.length) | 0;
+      px[i] = rand(-boxX, boxX); py[i] = rand(-boxY, boxY); pz[i] = rand(-boxZ, boxZ);
+      // Uniform motion: random direction on the unit sphere, constant speed.
+      const u = rand(-1, 1), a = rand(0, Math.PI * 2), s = Math.sqrt(1 - u * u);
+      const speed = rand(0.06, 0.16);
+      vx[i] = s * Math.cos(a) * speed; vy[i] = s * Math.sin(a) * speed; vz[i] = u * speed;
+    }
+    // Connection radius tuned for ~3.4 neighbours on average.
+    const density = N / (8 * boxX * boxY * boxZ);
+    R = Math.cbrt(3.4 / (density * 4.18879));
+    R2 = R * R;
+
+    // Pick the largest title font that fits.
+    title = TITLE_FONTS.find(f => Math.max(...f.map(l => l.length)) + 6 <= cols) || TITLE_FONTS[TITLE_FONTS.length - 1];
+    tw = Math.max(...title.map(l => l.length));
+    th = title.length;
+    tc0 = Math.floor((cols - tw) / 2);
+    tr0 = Math.floor((rows - th) / 2);
+    titleCells = [];
+    title.forEach((line, r) => {
+      for (let c = 0; c < line.length; c++) {
+        const g = line[c];
+        if (g === ' ') continue;
+        const start = reduceMotion ? 0 : 0.2 + (c / tw) * 0.6 + rand(0, 0.35);
+        titleCells.push({
+          c: tc0 + c, r: tr0 + r, g,
+          start, reveal: reduceMotion ? 0 : start + rand(0.25, 0.8),
+          glitchUntil: 0, glitchG: g,
+        });
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rasterization into the character grid
+  // ---------------------------------------------------------------------------
+  function plot(c, r, g, b, prio) {
+    if (c < 0 || r < 0 || c >= cols || r >= rows) return;
+    const i = r * cols + c;
+    if (prio > cellPrio[i]) {
+      cellPrio[i] = prio;
+      cellChar[i] = g;
+      cellBright[i] = b;
+    }
+  }
+
+  function drawEdge(i, j, strength) {
+    const c0 = sc[i], r0 = sr[i], c1 = sc[j], r1 = sr[j];
+    const dc = c1 - c0, dr = r1 - r0;
+    const n = Math.min(600, Math.ceil(Math.max(Math.abs(dc), Math.abs(dr))));
+    if (n < 2) return;
+    // Glyph from on-screen slope (in pixels, rows go downward).
+    const ax = Math.abs(dc * cw), ay = Math.abs(dr * chH);
+    let g;
+    if (ay < ax * 0.414) g = C_H;
+    else if (ay > ax * 2.414) g = C_V;
+    else g = (dc * dr > 0) ? C_BS : C_SL;
+    const d0 = sd[i], d1 = sd[j];
+    for (let s = 1; s < n; s++) {
+      const u = s / n;
+      const b = strength * (0.3 + 0.7 * (d0 + (d1 - d0) * u));
+      plot(Math.round(c0 + dc * u), Math.round(r0 + dr * u), b < 0.14 ? C_DOT : g, b, b);
+    }
+  }
+
+  // Box-drawing glyphs are stroked by hand so they connect seamlessly
+  // regardless of the font's line height.
+  function strokeBox(g, x0, y0) {
+    const w = cw, h = chH, mx = x0 + w / 2, my = y0 + h / 2;
+    const gap = Math.max(1, w * 0.17);
+    const x1 = x0 + w, y1 = y0 + h;
+    const seg = (ax, ay, bx, by) => { ctx.moveTo(ax, ay); ctx.lineTo(bx, by); };
+    switch (g) {
+      case '═': seg(x0, my - gap, x1, my - gap); seg(x0, my + gap, x1, my + gap); break;
+      case '║': seg(mx - gap, y0, mx - gap, y1); seg(mx + gap, y0, mx + gap, y1); break;
+      case '╗':
+        seg(x0, my - gap, mx + gap, my - gap); seg(mx + gap, my - gap, mx + gap, y1);
+        seg(x0, my + gap, mx - gap, my + gap); seg(mx - gap, my + gap, mx - gap, y1); break;
+      case '╔':
+        seg(x1, my - gap, mx - gap, my - gap); seg(mx - gap, my - gap, mx - gap, y1);
+        seg(x1, my + gap, mx + gap, my + gap); seg(mx + gap, my + gap, mx + gap, y1); break;
+      case '╚':
+        seg(mx - gap, y0, mx - gap, my + gap); seg(mx - gap, my + gap, x1, my + gap);
+        seg(mx + gap, y0, mx + gap, my - gap); seg(mx + gap, my - gap, x1, my - gap); break;
+      case '╝':
+        seg(mx + gap, y0, mx + gap, my + gap); seg(mx + gap, my + gap, x0, my + gap);
+        seg(mx - gap, y0, mx - gap, my - gap); seg(mx - gap, my - gap, x0, my - gap); break;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Frame
+  // ---------------------------------------------------------------------------
+  function frame(now) {
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+    last = now;
+    t += dt;
+    const speed = reduceMotion ? 0.15 : 1;
+
+    // Move nodes (constant velocity, elastic bounce on the box walls).
+    for (let i = 0; i < N; i++) {
+      px[i] += vx[i] * dt * speed; py[i] += vy[i] * dt * speed; pz[i] += vz[i] * dt * speed;
+      if (px[i] > boxX) { px[i] = 2 * boxX - px[i]; vx[i] = -vx[i]; } else if (px[i] < -boxX) { px[i] = -2 * boxX - px[i]; vx[i] = -vx[i]; }
+      if (py[i] > boxY) { py[i] = 2 * boxY - py[i]; vy[i] = -vy[i]; } else if (py[i] < -boxY) { py[i] = -2 * boxY - py[i]; vy[i] = -vy[i]; }
+      if (pz[i] > boxZ) { pz[i] = 2 * boxZ - pz[i]; vz[i] = -vz[i]; } else if (pz[i] < -boxZ) { pz[i] = -2 * boxZ - pz[i]; vz[i] = -vz[i]; }
+    }
+
+    // Camera: slow drift + pointer parallax.
+    yawP += (yawT - yawP) * Math.min(1, dt * 2);
+    pitchP += (pitchT - pitchP) * Math.min(1, dt * 2);
+    const yaw = Math.sin(t * 0.06 * speed) * 0.35 + yawP;
+    const pitch = Math.sin(t * 0.045 * speed) * 0.12 + pitchP;
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+
+    // Project.
+    const zSpan = Math.hypot(boxX, boxZ);
+    for (let i = 0; i < N; i++) {
+      const x1 = px[i] * cy + pz[i] * sy;
+      const z1 = -px[i] * sy + pz[i] * cy;
+      const y2 = py[i] * cp - z1 * sp;
+      const z2 = py[i] * sp + z1 * cp;
+      const zc = z2 + CAM;
+      if (zc < 0.4) { sd[i] = -1; continue; }
+      const p = CAM / zc;
+      sc[i] = cols / 2 + (x1 * p * k) / cw;
+      sr[i] = rows / 2 - (y2 * p * k) / chH;
+      sd[i] = clamp((zSpan - z2) / (2 * zSpan), 0, 1); // 1 = near, 0 = far
+    }
+
+    // Rasterize.
+    cellChar.fill(0); cellBright.fill(0); cellPrio.fill(0);
+    for (let i = 0; i < N; i++) {
+      if (sd[i] < 0) continue;
+      for (let j = i + 1; j < N; j++) {
+        if (sd[j] < 0) continue;
+        const dx = px[i] - px[j], dy = py[i] - py[j], dz = pz[i] - pz[j];
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < R2) drawEdge(i, j, Math.pow(1 - Math.sqrt(d2) / R, 0.8));
+      }
+    }
+    // Occasionally a term "reduces" into another one, with a brief flash.
+    if (Math.random() < dt * (reduceMotion ? 0.2 : 2.5)) {
+      const i = (Math.random() * N) | 0;
+      tk[i] = (Math.random() * TERMS.length) | 0;
+      flash[i] = 1;
+    }
+    for (let i = 0; i < N; i++) {
+      flash[i] = Math.max(0, flash[i] - dt * 2.5);
+      if (sd[i] < 0) continue;
+      const d = sd[i];
+      const glyphs = TERMS[tk[i]][d > 0.64 ? 1 : 0];
+      const b = Math.min(1, 0.35 + 0.65 * d + 0.5 * flash[i]);
+      const c0 = Math.round(sc[i]) - (glyphs.length >> 1), r = Math.round(sr[i]);
+      for (let m = 0; m < glyphs.length; m++) plot(c0 + m, r, glyphs[m], b, 10 + d);
+    }
+
+    // Dim the scene behind the title so it reads as an overlay.
+    const padC = 4, padR = 2;
+    for (let r = tr0 - padR; r < tr0 + th + padR; r++) {
+      if (r < 0 || r >= rows) continue;
+      const edgeR = r < tr0 || r >= tr0 + th;
+      for (let c = tc0 - padC; c < tc0 + tw + padC; c++) {
+        if (c < 0 || c >= cols) continue;
+        const edge = edgeR || c < tc0 || c >= tc0 + tw;
+        cellBright[r * cols + c] *= edge ? 0.45 : 0.18;
+      }
+    }
+    for (const tc of titleCells) {
+      if (t >= tc.start) cellChar[tc.r * cols + tc.c] = 0;
+    }
+
+    // Draw.
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    ctx.font = `${fs}px ${FONT_FAMILY}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+
+    for (let l = 0; l < LEVELS; l++) buckets[l].length = 0;
+    for (let i = 0, n = cellChar.length; i < n; i++) {
+      if (cellChar[i] === 0 || cellBright[i] < 0.03) continue;
+      buckets[Math.min(LEVELS - 1, Math.floor(cellBright[i] * LEVELS))].push(i);
+    }
+    for (let l = 0; l < LEVELS; l++) {
+      const b = buckets[l];
+      if (!b.length) continue;
+      ctx.fillStyle = GRAYS[l];
+      for (let m = 0; m < b.length; m++) {
+        const i = b[m], c = i % cols, r = (i / cols) | 0;
+        ctx.fillText(CH[cellChar[i]], ox + c * cw, oy + r * chH + chH / 2);
+      }
+    }
+
+    drawTitle(dt);
+    requestAnimationFrame(frame);
+  }
+
+  function drawTitle(dt) {
+    // Occasional glitch on a random character once the title is revealed.
+    if (!reduceMotion && Math.random() < dt * 1.2) {
+      const tc = titleCells[(Math.random() * titleCells.length) | 0];
+      if (t > tc.reveal) {
+        tc.glitchUntil = t + rand(0.05, 0.16);
+        tc.glitchG = GLITCH[(Math.random() * GLITCH.length) | 0];
+      }
+    }
+    const tick = Math.floor(t * 18);
+    ctx.lineWidth = Math.max(1, cw * 0.11);
+    ctx.lineCap = 'square';
+    ctx.strokeStyle = '#7a7a7a';
+    ctx.beginPath();
+    for (let n = 0; n < titleCells.length; n++) {
+      const tc = titleCells[n];
+      if (t < tc.start) continue;
+      const x = ox + tc.c * cw, y = oy + tc.r * chH;
+      let g = tc.g, scramble = false;
+      if (t < tc.reveal) { g = GLITCH[(tick * 7 + n * 13) % GLITCH.length]; scramble = true; }
+      else if (t < tc.glitchUntil) { g = tc.glitchG; scramble = true; }
+
+      if (scramble) {
+        ctx.fillStyle = '#9a9a9a';
+        ctx.fillText(g, x, y + chH / 2);
+      } else if (g === '█') {
+        ctx.fillStyle = '#f2f2f2';
+        ctx.fillRect(x, y, cw + 0.5, chH + 0.5);
+      } else if (BOX_CHARS.includes(g)) {
+        strokeBox(g, x, y);
+      } else {
+        ctx.fillStyle = '#f2f2f2';
+        ctx.fillText(g, x, y + chH / 2);
+      }
+    }
+    ctx.stroke();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Events
+  // ---------------------------------------------------------------------------
+  window.addEventListener('pointermove', e => {
+    yawT = (e.clientX / W - 0.5) * 0.5;
+    pitchT = (e.clientY / H - 0.5) * 0.3;
+  }, { passive: true });
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { setup(); t = Math.max(t, 3); }, 120);
+  });
+
+  setup();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
