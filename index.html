@@ -17,6 +17,24 @@
       radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%),
       repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px);
   }
+  /* Terminal-style links, top right. Rendered under the CRT overlay. */
+  nav {
+    position: fixed; top: 0; right: 0; z-index: 1;
+    display: flex; gap: 1ch; padding: 1.25rem 1.5rem;
+    font: clamp(12px, 1.1vw, 15px)/1 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  nav a {
+    display: inline-block; padding: .55em .9em;
+    color: #b8b8b8; text-decoration: none; letter-spacing: .02em;
+    border: 1px solid #3a3a3a; background: rgba(0,0,0,.72);
+    transition: color .15s, border-color .15s, background-color .15s;
+  }
+  nav a::before { content: "[ "; color: #5a5a5a; }
+  nav a::after  { content: " ]"; color: #5a5a5a; }
+  nav a:hover, nav a:focus-visible { color: #f2f2f2; border-color: #9a9a9a; outline: none; }
+  nav a.primary { color: #000; background: #e6e6e6; border-color: #e6e6e6; }
+  nav a.primary::before, nav a.primary::after { color: #555; }
+  nav a.primary:hover, nav a.primary:focus-visible { background: #fff; border-color: #fff; color: #000; }
   .sr-only {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip: rect(0 0 0 0); white-space: nowrap;
@@ -30,6 +48,10 @@
 <body>
 <h1 class="sr-only">Typednotes</h1>
 <canvas id="screen" aria-hidden="true"></canvas>
+<nav aria-label="Links">
+  <a href="https://github.com/typednotes/typednotes" rel="noopener">github</a>
+  <a class="primary" href="https://app.typednotes.com/login">sign in</a>
+</nav>
 <div class="crt" aria-hidden="true"></div>
 <noscript><pre>
  _____                     _             _
@@ -105,6 +127,12 @@
   let t = 0, last = 0;
   let yawP = 0, pitchP = 0, yawT = 0, pitchT = 0;
 
+  // Cursor trail: grid cell -> { g, a }, alpha decaying exponentially.
+  const TRAIL_GLYPHS = Array.from('λΠ∀∃Σ→↦⊢*□ℕℤ=≡∘αβ×∧∨¬↔#▸⟨⟩:');
+  const TRAIL_TAU = 0.3; // seconds (alpha is divided by e every TRAIL_TAU)
+  const trail = new Map();
+  let trailC = null, trailR = null;
+
   function setup() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth;
@@ -128,6 +156,8 @@
     cellBright = new Float32Array(n);
     cellPrio = new Float32Array(n);
     buckets = Array.from({ length: LEVELS }, () => []);
+    trail.clear();
+    trailC = trailR = null;
 
     // World: height spans [-1, 1], width follows the physical screen aspect.
     const aspect = (cols * cw) / (rows * chH);
@@ -336,7 +366,39 @@
     }
 
     drawTitle(dt);
+    drawTrail(dt);
     requestAnimationFrame(frame);
+  }
+
+  // Red glyphs overlaid (with transparency) on top of everything else.
+  function drawTrail(dt) {
+    if (!trail.size) return;
+    const decay = Math.exp(-dt / TRAIL_TAU);
+    for (const [i, cell] of trail) {
+      cell.a *= decay;
+      if (cell.a < 0.01) { trail.delete(i); continue; }
+      const c = i % cols, r = (i / cols) | 0;
+      ctx.fillStyle = `rgba(255,0,0,${cell.a.toFixed(3)})`;
+      ctx.fillText(cell.g, ox + c * cw, oy + r * chH + chH / 2);
+    }
+  }
+
+  // Light up every cell between the previous and current pointer cells,
+  // so fast movements still leave a continuous tail.
+  function trailTo(x, y) {
+    const c = Math.floor((x - ox) / cw), r = Math.floor((y - oy) / chH);
+    const c0 = trailC ?? c, r0 = trailR ?? r;
+    const n = Math.min(400, Math.max(Math.abs(c - c0), Math.abs(r - r0)));
+    for (let s = n === 0 ? 0 : 1; s <= n; s++) {
+      const u = n === 0 ? 1 : s / n;
+      const cc = Math.round(c0 + (c - c0) * u), rr = Math.round(r0 + (r - r0) * u);
+      if (cc < 0 || rr < 0 || cc >= cols || rr >= rows) continue;
+      const i = rr * cols + cc;
+      const cell = trail.get(i);
+      if (cell) cell.a = 1;
+      else trail.set(i, { g: TRAIL_GLYPHS[(Math.random() * TRAIL_GLYPHS.length) | 0], a: 1 });
+    }
+    trailC = c; trailR = r;
   }
 
   function drawTitle(dt) {
@@ -383,7 +445,14 @@
   window.addEventListener('pointermove', e => {
     yawT = (e.clientX / W - 0.5) * 0.5;
     pitchT = (e.clientY / H - 0.5) * 0.3;
+    trailTo(e.clientX, e.clientY);
   }, { passive: true });
+  // Don't draw a line across the screen when the pointer re-enters or taps elsewhere.
+  window.addEventListener('pointerdown', e => {
+    trailC = trailR = null;
+    trailTo(e.clientX, e.clientY);
+  }, { passive: true });
+  document.documentElement.addEventListener('pointerleave', () => { trailC = trailR = null; });
 
   let resizeTimer;
   window.addEventListener('resize', () => {
