@@ -1,0 +1,2 @@
+# home
+Typednotes homepage
