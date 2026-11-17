@@ -1,0 +1,4 @@
+# agents-md standard: local, generated and cached content
+reviews/
+output/
+.cache/
